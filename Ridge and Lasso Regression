@@ -21,3 +21,7 @@ print("Feature-shape",x.shape)
 print("Target-shape",y.shape)
 
 #10 features and 442 samples
+
+#standardize
+scaler= StandardScaler()
+x_scaler=scaler.fit_transform(x)
