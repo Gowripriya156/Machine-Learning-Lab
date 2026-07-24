@@ -1,0 +1,84 @@
+Implement polynomial regression on the Auto MPG dataset to predict miles per gallon
+(MPG) based on engine displacement. Compare polynomial regression results with linear
+regression.
+Tasks:
+● Load and preprocess the dataset.
+● Implement polynomial regression of varying degrees.
+● Compare the polynomial regression models with linear regression using metrics
+such as MSE and R-squared.
+● Visualize the polynomial fit.
+
+
+
+**Python Code**
+https://colab.research.google.com/drive/1_1S3iIXEZypmgx-j5L7WMmSjlPxkapxI?usp=sharing
+
+#import
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error,r2_score
+import matplotlib.pyplot as plt
+#fetch data
+data_url= "auto-mpg.csv"
+df= pd.read_csv(data_url)
+df_clean = df[['displacement','mpg']].dropna
+x= df[['displacement']].values.astype(float).reshape(-1,1)
+y= df[['mpg']].values.astype(float).reshape(-1,1)
+max_deg=15
+degree= [x for x in range(1,max_deg+1)]
+x_plot= np.linspace(x.min(),x.max(),500).reshape(-1,1)
+#plt.figure(figsize=(10,6))
+colors=['red','blue','cyan','green','orange','purple','brown','pink','magenta','olive','black','navy','gold','lime','teal']
+print("_ "*5,"Performance metrics","_ "*5)
+print("Degree\tMSE\tR^2")
+for deg in degree:
+  if deg==1:
+    model=LinearRegression()
+    model.fit(x,y)
+    y_pred=model.predict(x)
+    y_plot=model.predict(x_plot)
+
+  else:
+    poly= PolynomialFeatures(degree=deg)
+    x_poly = poly.fit_transform(x)
+    x_plot_poly=poly.transform(x_plot)
+    model=LinearRegression()
+    model.fit(x_poly,y)
+    y_pred=model.predict(x_poly)
+    y_plot=model.predict(x_plot_poly)
+  #mse and r2
+  mse=mean_squared_error(y,y_pred)
+  r2=r2_score(y,y_pred)
+  print(f"{deg}\t{mse}\t\t{r2}")
+  plt.plot(x_plot,y_plot,color=colors[deg-1],label=f"Degree{deg}")
+#draw graph
+plt.xlabel("Engine displacement")
+plt.ylabel("MPG")
+plt.title("Linear vs Polynomial")
+#plt.scatter(x,y)
+plt.scatter(x,y,color='grey',s=5)
+plt.show()
+
+
+**Output**
+_ _ _ _ _  Performance metrics _ _ _ _ _ 
+Degree	MSE	R^2
+1	21.5261604508619		0.6467421834257859
+2	18.98735896326739		0.688405510811562
+3	18.921089414237827		0.6894930357442587
+4	18.917003034680853		0.689560095800012
+5	18.891730156193177		0.6899748396134051
+6	18.857526339854157		0.690536145727703
+7	18.825161798661593		0.691067268181343
+8	20.733691509540808		0.659747096612836
+9	21.860788383956628		0.6412507288173515
+10	23.16864899883229		0.6197879144780722
+11	24.734697682726974		0.5940880717223518
+12	26.553123654466198		0.5642465591198236
+13	28.489190698500238		0.5324744826142165
+14	30.376145082028014		0.5015083757220106
+15	32.11182279266279		0.47302481406989894
+
+//Graph//
