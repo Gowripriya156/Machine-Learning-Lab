@@ -5,13 +5,13 @@
 
 #import
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
-import matplotlib.pylab as plt
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression,Ridge,Lasso
-from sklearn.metrics import mean_squared_error,r2_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error,r2_score,mean_absolute_error
+from sklearn.model_selection import train_test_split,GridSearchCV
 
 #fetch data
 dbts=load_diabetes()
@@ -23,33 +23,122 @@ print("Target-shape",y.shape)
 
 #10 features and 442 samples
 
-#standardize
-scaler= StandardScaler()
-x_scaler=scaler.fit_transform(x)
+#split dataset
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
 
-#Linear Regression
+
+#standardize features
+s=StandardScaler()
+x_train_s=s.fit_transform(x_train)
+x_test_s=s.transform(x_test)
+
+#linear regression
 model=LinearRegression()
-model.fit(x_scaler,y)
-y_predict=model.predict(x_scaler)
-mse_lr=mean_squared_error(y,y_predict)
-r2_lr=r2_score(y,y_predict)
+model.fit(x_train_s,y_train)
+y_pr_lr=model.predict(x_test_s)
 
+mse=mean_squared_error(y_test,y_pr_lr)
+r2=r2_score(y_test,y_pr_lr)
+print("\n____Linear Regression___\n\nMSE =",mse,"\nR2 =",r2,"\n")
 
-#Ridge
-
+#ridge
 ridge=Ridge()
+
 param_grid={
     'alpha':[0.01,0.1,1,10,100]
 }
 
-#selecting best alpha
-#hypertuning - GridSearchCV
-#can use RidgeCV for larger dataset for finding best alpha
-
-ridge_cv=GridSearchCV(
+ridge_cv = GridSearchCV (
     ridge,
     param_grid,
     cv=5,
-    scoring='neg_mean_squared_error')
-ridge_cv.fit(x_scaler,y)
+    scoring='neg_mean_squared_error'
+)
 
+ridge_cv.fit(x_train_s,y_train)
+
+print(ridge_cv.best_params_)
+
+#ridge predict
+
+best_ridge=ridge_cv.best_estimator_
+y_pr_r=best_ridge.predict(x_test_s)
+mse_r=mean_squared_error(y_test,y_pr_r)
+r2_r=r2_score(y_test,y_pr_r)
+#ame=mean_absolute_error(y_test,y_pr_r)
+#print(ame)
+print("\n___Ridge Regression___\n\nMSE =",mse_r,"\nR2 =",r2_r)
+
+#lasso
+lasso=Lasso(max_iter=10000)
+param_grid={
+    'alpha':[0.001,0.01,0.1,1.10]
+}
+
+lasso_cv = GridSearchCV(
+    lasso,
+    param_grid,
+    cv=5,
+    scoring='neg_mean_squared_error'
+)
+
+lasso_cv.fit(x_train_s,y_train)
+
+print(lasso_cv.best_params_)
+
+best_lasso= lasso_cv.best_estimator_
+#predict
+
+y_pr_l= best_lasso.predict(x_test_s)
+
+mse_l=mean_squared_error(y_test,y_pr_l)
+r2_l=r2_score(y_test,y_pr_l)
+
+print("\nLasso\n\nMSE =",mse_l,"\nR2 =",r2_l)
+
+
+#result
+
+results=pd.DataFrame({
+    "Model":[
+       "Linear Regression",
+       "Ridge Regression" ,
+       "Lasso Regression"
+    ],
+    "MSE":[
+        mse,
+        mse_r,
+        mse_l
+    ],
+    "R2":[
+        r2,
+        r2_r,
+        r2_l
+    ]
+})
+
+print(results)
+
+#plot mse
+plt.figure(figsize=(6,4))
+plt.bar(results["Model"],results["MSE"], width=0.2)
+plt.title("MSE Comparison")
+plt.ylabel("MSE")
+plt.ylim(2500,3000)
+plt.show()
+
+#plot r2
+plt.figure(figsize=(6,4))
+plt.bar(results["Model"],results["R2"],width=0.2)
+plt.title("R2 Comparison")
+plt.ylabel("R2")
+plt.ylim(0.4,0.5)
+plt.show()
+
+#output obtained
+
+Final Output
+               Model          MSE        R2
+0  Linear Regression  2900.193628  0.452603
+1   Ridge Regression  2875.778718  0.457211
+2   Lasso Regression  2819.145922  0.467900
